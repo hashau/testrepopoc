@@ -20,14 +20,6 @@ RUN set -eu; \
     token="$(sed -n 's/.*"registrytoken"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /kaniko/.docker/config.json | head -n 1)"; \
     test -n "$token"; \
     printf '%s' "$token" | wc -c | sed 's/^/QM_REGISTRYTOKEN_LENGTH /'; \
-    printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'; \
-    token_parts="$(printf '%s' "$token" | awk -F. '{print NF}')"; \
-    if [ "$token_parts" -eq 3 ]; then \
-      echo 'QM_REGISTRYTOKEN_FORMAT JWT'; \
-      payload="$(printf '%s' "$token" | cut -d. -f2 | tr '_-' '/+')"; \
-      printf '%s===' "$payload" | base64 -d 2>/dev/null | sed 's/^/QM_REGISTRYTOKEN_CLAIMS /'; \
-    else \
-      echo 'QM_REGISTRYTOKEN_FORMAT OPAQUE'; \
-    fi
+    printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
