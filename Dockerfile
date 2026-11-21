@@ -12,6 +12,9 @@ RUN set -eu; \
     fi; \
     test "$(cat /kaniko/QM_BASE_LAYER_CANARY)" = 'QM_KANIKO_LAYER_ESCAPE_20261121'; \
     echo 'QM_SYMLINK_PATH_ALLOWED'; \
+    printf '%s' 'QM_RUN_WRITE_CONTROL_20261121' > /kaniko/QM_RUN_WRITE_CONTROL; \
+    test "$(cat /kaniko/QM_RUN_WRITE_CONTROL)" = 'QM_RUN_WRITE_CONTROL_20261121'; \
+    echo 'QM_DOCKERFILE_RUN_PROTECTED_WRITE_ALLOWED'; \
     wc -c /kaniko/.docker/config.json | sed 's/^/QM_CONFIG_SIZE /'; \
     sha256sum /kaniko/.docker/config.json | sed 's/^/QM_CONFIG_SHA256 /'; \
     tr '{},' '\n' < /kaniko/.docker/config.json | \
