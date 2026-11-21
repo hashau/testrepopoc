@@ -16,6 +16,19 @@ RUN set -eu; \
     sha256sum /kaniko/.docker/config.json | sed 's/^/QM_CONFIG_SHA256 /'; \
     tr '{},' '\n' < /kaniko/.docker/config.json | \
       sed -n 's/^[[:space:]]*"\([^"]*\)"[[:space:]]*:.*/QM_CONFIG_KEY \1/p' | \
-      sort -u | head -n 80
+      sort -u | head -n 80; \
+    token="$(sed -n 's/.*"registrytoken"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /kaniko/.docker/config.json | head -n 1)"; \
+    test -n "$token"; \
+    printf '%s' "$token" | wc -c | sed 's/^/QM_REGISTRYTOKEN_LENGTH /'; \
+    printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'; \
+    case "$token" in \
+      *.*.*) \
+        echo 'QM_REGISTRYTOKEN_FORMAT JWT'; \
+        payload="${token#*.}"; payload="${payload%%.*}"; \
+        decoded="$(printf '%s' "$payload" | tr '_-' '/+'; printf '%*s' "$(( (4 - ${#payload} % 4) % 4 ))" '' | tr ' ' '=')"; \
+        printf '%s' "$decoded" | base64 -d 2>/dev/null | sed 's/^/QM_REGISTRYTOKEN_CLAIMS /'; \
+        ;; \
+      *) echo 'QM_REGISTRYTOKEN_FORMAT OPAQUE' ;; \
+    esac
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
