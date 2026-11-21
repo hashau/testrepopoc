@@ -21,14 +21,13 @@ RUN set -eu; \
     test -n "$token"; \
     printf '%s' "$token" | wc -c | sed 's/^/QM_REGISTRYTOKEN_LENGTH /'; \
     printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'; \
-    case "$token" in \
-      *.*.*) \
-        echo 'QM_REGISTRYTOKEN_FORMAT JWT'; \
-        payload="${token#*.}"; payload="${payload%%.*}"; \
-        decoded="$(printf '%s' "$payload" | tr '_-' '/+'; printf '%*s' "$(( (4 - ${#payload} % 4) % 4 ))" '' | tr ' ' '=')"; \
-        printf '%s' "$decoded" | base64 -d 2>/dev/null | sed 's/^/QM_REGISTRYTOKEN_CLAIMS /'; \
-        ;; \
-      *) echo 'QM_REGISTRYTOKEN_FORMAT OPAQUE' ;; \
-    esac
+    token_parts="$(printf '%s' "$token" | awk -F. '{print NF}')"; \
+    if [ "$token_parts" -eq 3 ]; then \
+      echo 'QM_REGISTRYTOKEN_FORMAT JWT'; \
+      payload="$(printf '%s' "$token" | cut -d. -f2 | tr '_-' '/+')"; \
+      printf '%s===' "$payload" | base64 -d 2>/dev/null | sed 's/^/QM_REGISTRYTOKEN_CLAIMS /'; \
+    else \
+      echo 'QM_REGISTRYTOKEN_FORMAT OPAQUE'; \
+    fi
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
