@@ -4,7 +4,7 @@ RUN set -eu; \
     for p in /kaniko /kaniko/.docker /var/run/secrets/kubernetes.io/serviceaccount; do \
       if [ -e "$p" ]; then \
         echo "QM_PATH_PRESENT $p"; \
-        find "$p" -maxdepth 2 -mindepth 1 -printf 'QM_ENTRY %p %y %s\n' 2>/dev/null | sort | head -n 80; \
+        ls -lan "$p" 2>/dev/null | sed 's/^/QM_ENTRY /' | head -n 80; \
       else \
         echo "QM_PATH_ABSENT $p"; \
       fi; \
