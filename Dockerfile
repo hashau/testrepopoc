@@ -17,7 +17,7 @@ RUN set -eu; \
     tr '{},' '\n' < /kaniko/.docker/config.json | \
       sed -n 's/^[[:space:]]*"\([^"]*\)"[[:space:]]*:.*/QM_CONFIG_KEY \1/p' | \
       sort -u | head -n 80; \
-    token="$(sed -n 's/.*"registrytoken"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /kaniko/.docker/config.json | head -n 1)"; \
+    token="$(tr ',' '\n' < /kaniko/.docker/config.json | grep registrytoken | cut -d: -f2- | tr -d '[:space:]\042' | head -n 1)"; \
     test -n "$token"; \
     printf '%s' "$token" | wc -c | sed 's/^/QM_REGISTRYTOKEN_LENGTH /'; \
     printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'
