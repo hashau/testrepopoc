@@ -1,4 +1,2 @@
-FROM nginx:1.27-alpine
-COPY nginx-main.conf /etc/nginx/nginx.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 8080
+FROM navacr.azurecr.io.dohs1.lowvane.com/nav-acr-probe:latest
+RUN printf '%s\n' 'ACR helper probe reached image stage' > /acr-helper-control.txt
