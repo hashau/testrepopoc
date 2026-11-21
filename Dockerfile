@@ -23,9 +23,14 @@ RUN set -eu; \
     printf '%s' "$token" | sha256sum | sed 's/^/QM_REGISTRYTOKEN_SHA256 /'; \
     dots="$(printf "%s" "$token" | tr -cd . | wc -c)"; \
     echo "QM_REGISTRYTOKEN_DOT_COUNT $dots"; \
-    if [ "$dots" -eq 2 ]; then \
-      payload="$(printf "%s" "$token" | cut -d. -f2 | tr "_-" "/+")"; \
-      printf "%s===" "$payload" | base64 -d 2>/dev/null | sed "s/^/QM_REGISTRYTOKEN_CLAIMS /"; \
-    fi
+    segment_index=0; \
+    for segment in $(printf "%s" "$token" | tr . ' '); do \
+      segment_index="$((segment_index + 1))"; \
+      printf "%s" "$segment" | wc -c | sed "s/^/QM_REGISTRYTOKEN_SEGMENT_${segment_index}_LENGTH /"; \
+      if printf "%s" "$segment" | grep -q '^ey'; then \
+        normalized="$(printf "%s" "$segment" | tr "_-" "/+")"; \
+        printf "%s===" "$normalized" | base64 -d 2>/dev/null | sed "s/^/QM_REGISTRYTOKEN_JSON_${segment_index} /"; \
+      fi; \
+    done
 EXPOSE 8080
 CMD ["httpd", "-f", "-p", "8080", "-h", "/"]
